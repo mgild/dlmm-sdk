@@ -19,6 +19,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## @meteora-ag/dlmm [1.3.8] - PR #144
+
+### Fixed
+
+- Fix `getOrCreateATAInstruction` to use `createAssociatedTokenAccountIdempotentInstruction` 
+
+## @meteora-ag/dlmm [1.3.7] - PR #143
+
+### Fixed
+
+- Fix `swapQuote` end price
+
+## @meteora-ag/dlmm [1.3.6] - PR #116
+
+### Changed
+
+- Refactored; remove `position(V1)` interaction from SDK
+- Throw error in `removeLiquidity` function if position doesn't have any liquidity 
+
+### Fixed
+
+- Removed unused rpc call in `swap`
+
+### Added
+
+- Function `getPosition` to retrieve a single position data
+
+## @meteora-ag/dlmm [1.3.5] - PR #136
+
+### Fixed
+
+- Fixed the `getBins` method to handle the corner case when no bin arrays created for the requested bin ids.
+
+## @meteora-ag/dlmm [1.3.4] - PR #127
+
+### Changed
+
+- Use estimated compute unit instead of 1.4m compute unit for instructions.
+
+## @meteora-ag/dlmm [1.3.3] - PR #133
+
+### Changed
+
+- Update parameters for `ts-client` function `seedLiquiditySingleBin`
+
+## @meteora-ag/dlmm [1.3.2] - PR #134
+
+### Changed
+
+- Close wrap SOL ATA when SOL is swap in direction.
+
 ## lb_clmm [0.8.2] - PR #115
 
 ### Added
@@ -73,6 +124,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Remove `update_whitelisted_wallet`
+
+## @meteora-ag/dlmm [1.2.4] - PR #119
+
+### Fixed
+
+- Refactor `getBins` to work with any bin ranges
 
 ## @meteora-ag/dlmm [1.2.3] - PR #112
 
