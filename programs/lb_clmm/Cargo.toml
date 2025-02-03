@@ -20,7 +20,7 @@ staging = []
 
 [dependencies]
 anchor-lang = { version = "0.29.0", features = ["event-cpi", "idl-build"] }
-anchor-spl = "0.29.0"
+anchor-spl = { version = "0.29.0", features = ["idl-build"] }
 uint = "0.8.5"
 bytemuck = { version = "1.13.1", features = ["derive", "min_const_generics"] }
 ruint = "1.3.0"
