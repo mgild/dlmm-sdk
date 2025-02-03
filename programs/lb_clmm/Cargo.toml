@@ -19,7 +19,7 @@ test-bpf = []
 staging = []
 
 [dependencies]
-anchor-lang = { version = "0.29.0", features = ["event-cpi"] }
+anchor-lang = { version = "0.29.0", features = ["event-cpi", "idl-build"] }
 anchor-spl = "0.29.0"
 uint = "0.8.5"
 bytemuck = { version = "1.13.1", features = ["derive", "min_const_generics"] }
