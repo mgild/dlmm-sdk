@@ -102,7 +102,7 @@ impl Default for PositionV2 {
 }
 
 #[zero_copy]
-#[derive(Default, Debug, AnchorDeserialize, AnchorSerialize, InitSpace, PartialEq)]
+#[derive(Default, Debug, AnchorDeserialize, InitSpace, PartialEq)]
 pub struct FeeInfo {
     pub fee_x_per_token_complete: u128,
     pub fee_y_per_token_complete: u128,
@@ -111,7 +111,7 @@ pub struct FeeInfo {
 }
 
 #[zero_copy]
-#[derive(Default, Debug, AnchorDeserialize, AnchorSerialize, InitSpace, PartialEq)]
+#[derive(Default, Debug, AnchorDeserialize, InitSpace, PartialEq)]
 pub struct UserRewardInfo {
     pub reward_per_token_completes: [u128; NUM_REWARDS],
     pub reward_pendings: [u64; NUM_REWARDS],
