@@ -19,6 +19,7 @@ mod instructions;
 mod math;
 
 use args::*;
+use instructions::get_all_positions::get_all_positions;
 use instructions::initialize_customizable_permissionless_lb_pair::InitCustomizablePermissionlessLbPairParameters;
 use instructions::initialize_lb_pair::*;
 use instructions::seed_liquidity_from_operator::{
@@ -68,6 +69,10 @@ use crate::{
         },
         seed_liquidity::{seed_liquidity, SeedLiquidityParameters},
         set_activation_point::*,
+        set_pair_status::{set_pair_status, SetPairStatusParam},
+        set_pair_status_permissionless::{
+            set_pair_status_permissionless, SetPairStatusPermissionlessParam,
+        },
         set_pre_activation_duration::{set_pre_activation_duration, SetPreactivationDurationParam},
         set_pre_activation_swap_address::{
             set_pre_activation_swap_address, SetPreactivationSwapAddressParam,
@@ -77,7 +82,6 @@ use crate::{
         swap_exact_in::{swap, SwapExactInParameters},
         swap_exact_out::{swap_exact_out, SwapExactOutParameters},
         swap_with_price_impact::{swap_with_price_impact, SwapWithPriceImpactParameters},
-        toggle_pair_status::toggle_pool_status,
         update_reward_duration::*,
         update_reward_funder::*,
         withdraw_protocol_fee::{withdraw_protocol_fee, WithdrawProtocolFeeParams},
@@ -213,7 +217,13 @@ async fn main() -> Result<()> {
                 bin_liquidity_distribution,
                 position,
             };
-            add_liquidity(params, &amm_program, transaction_config).await?;
+            add_liquidity(
+                params,
+                &amm_program,
+                transaction_config,
+                compute_unit_price_ix,
+            )
+            .await?;
         }
         Command::RemoveLiquidity {
             lb_pair,
@@ -225,7 +235,13 @@ async fn main() -> Result<()> {
                 position,
                 bin_liquidity_removal,
             };
-            remove_liquidity(params, &amm_program, transaction_config).await?;
+            remove_liquidity(
+                params,
+                &amm_program,
+                transaction_config,
+                compute_unit_price_ix,
+            )
+            .await?;
         }
         Command::SwapExactIn {
             lb_pair,
@@ -259,7 +275,13 @@ async fn main() -> Result<()> {
                 reward_index,
                 position,
             };
-            claim_reward(params, &amm_program, transaction_config).await?;
+            claim_reward(
+                params,
+                &amm_program,
+                transaction_config,
+                compute_unit_price_ix,
+            )
+            .await?;
         }
         Command::UpdateRewardDuration {
             lb_pair,
@@ -289,7 +311,13 @@ async fn main() -> Result<()> {
             close_position(position, &amm_program, transaction_config).await?;
         }
         Command::ClaimFee { position } => {
-            claim_fee(position, &amm_program, transaction_config).await?;
+            claim_fee(
+                position,
+                &amm_program,
+                transaction_config,
+                compute_unit_price_ix,
+            )
+            .await?;
         }
         Command::IncreaseLength {
             lb_pair,
@@ -322,7 +350,13 @@ async fn main() -> Result<()> {
                 y_amount,
                 side_ratio,
             };
-            simulate_swap_demand(params, &amm_program, transaction_config).await?;
+            simulate_swap_demand(
+                params,
+                &amm_program,
+                transaction_config,
+                compute_unit_price_ix,
+            )
+            .await?;
         }
         Command::SwapExactOut {
             lb_pair,
@@ -360,6 +394,7 @@ async fn main() -> Result<()> {
             has_alpha_vault,
             activation_point,
             selective_rounding,
+            creator_pool_on_off_control,
         } => {
             let params = InitCustomizablePermissionlessLbPairParameters {
                 token_mint_x,
@@ -371,11 +406,13 @@ async fn main() -> Result<()> {
                 has_alpha_vault,
                 activation_type,
                 selective_rounding,
+                creator_pool_on_off_control,
             };
             initialize_customizable_permissionless_lb_pair(
                 params,
                 &amm_program,
                 transaction_config,
+                compute_unit_price_ix,
             )
             .await?;
         }
@@ -543,6 +580,13 @@ async fn main() -> Result<()> {
             )
             .await?;
         }
+        Command::GetAllPositionsForAnOwner { lb_pair, owner } => {
+            get_all_positions(&amm_program, lb_pair, owner).await?;
+        }
+        Command::SetPairStatusPermissionless { lb_pair, enable } => {
+            let params = SetPairStatusPermissionlessParam { lb_pair, enable };
+            set_pair_status_permissionless(params, &amm_program, transaction_config).await?
+        }
         Command::Admin(admin_command) => match admin_command {
             AdminCommand::InitializePermissionPair {
                 bin_step,
@@ -568,9 +612,6 @@ async fn main() -> Result<()> {
                 };
                 initialize_permission_lb_pair(params, &amm_program, transaction_config).await?;
             }
-            AdminCommand::TogglePoolStatus { lb_pair } => {
-                toggle_pool_status(lb_pair, &amm_program, transaction_config).await?;
-            }
             AdminCommand::RemoveLiquidityByPriceRange {
                 lb_pair,
                 base_position_key,
@@ -583,7 +624,13 @@ async fn main() -> Result<()> {
                     min_price,
                     max_price,
                 };
-                remove_liquidity_by_price_range(params, &amm_program, transaction_config).await?;
+                remove_liquidity_by_price_range(
+                    params,
+                    &amm_program,
+                    transaction_config,
+                    compute_unit_price_ix,
+                )
+                .await?;
             }
             AdminCommand::CheckMyBalance {
                 lb_pair,
@@ -661,7 +708,13 @@ async fn main() -> Result<()> {
                     reward_index,
                     funding_amount,
                 };
-                fund_reward(params, &amm_program, transaction_config).await?;
+                fund_reward(
+                    params,
+                    &amm_program,
+                    transaction_config,
+                    compute_unit_price_ix,
+                )
+                .await?;
             }
             AdminCommand::InitializeReward {
                 lb_pair,
@@ -698,6 +751,16 @@ async fn main() -> Result<()> {
                     pre_activation_duration,
                 };
                 set_pre_activation_duration(params, &amm_program, transaction_config).await?;
+            }
+            AdminCommand::SetPairStatus {
+                lb_pair,
+                pair_status,
+            } => {
+                let params = SetPairStatusParam {
+                    lb_pair,
+                    pair_status,
+                };
+                set_pair_status(params, &amm_program, transaction_config).await?;
             }
         },
     };

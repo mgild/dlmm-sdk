@@ -26,8 +26,10 @@ pub struct CustomizableParams {
     pub has_alpha_vault: bool,
     /// Decide when does the pool start trade. None = Now
     pub activation_point: Option<u64>,
+    /// Pool creator have permission to enable/disable pool with restricted program validation. Only applicable for customizable permissionless pool.
+    pub creator_pool_on_off_control: bool,
     /// Padding, for future use
-    pub padding: [u8; 64],
+    pub padding: [u8; 63],
 }
 
 #[event_cpi]
@@ -111,7 +113,8 @@ pub struct InitializeCustomizablePermissionlessLbPair<'info> {
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
+    /// CHECK: user token Y, only be checked if token_y_mint is not based quote token
+    pub user_token_y: UncheckedAccount<'info>,
 }
 
 pub fn handle(

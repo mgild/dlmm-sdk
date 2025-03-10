@@ -277,6 +277,8 @@ pub enum Command {
         /// Pool activation point. None = Now
         #[clap(long)]
         activation_point: Option<u64>,
+        #[clap(long)]
+        creator_pool_on_off_control: bool,
     },
 
     /// Seed liquidity
@@ -400,6 +402,24 @@ pub enum Command {
         selective_rounding: SelectiveRounding,
     },
 
+    GetAllPositionsForAnOwner {
+        /// Address of the pair
+        #[clap(long)]
+        lb_pair: Pubkey,
+        /// owner of position
+        #[clap(long)]
+        owner: Pubkey,
+    },
+
+    SetPairStatusPermissionless {
+        /// Address of the pair
+        #[clap(long)]
+        lb_pair: Pubkey,
+        /// Enable
+        #[clap(long)]
+        enable: bool,
+    },
+
     #[clap(flatten)]
     Admin(AdminCommand),
 }
@@ -433,12 +453,6 @@ pub enum AdminCommand {
         lock_duration: u64,
         /// Activation type
         activation_type: u8,
-    },
-
-    /// Toggle pool status
-    TogglePoolStatus {
-        /// Address of the pair
-        lb_pair: Pubkey,
     },
 
     /// Remove liquidity by price range
@@ -530,5 +544,12 @@ pub enum AdminCommand {
         lb_pair: Pubkey,
         /// Preactivation swap address
         pre_activation_swap_address: Pubkey,
+    },
+
+    SetPairStatus {
+        /// Address of the pair
+        lb_pair: Pubkey,
+        /// Pair status. 0 is enabled, 1 is disabled
+        pair_status: u8,
     },
 }

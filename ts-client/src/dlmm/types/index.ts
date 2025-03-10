@@ -123,9 +123,6 @@ export enum PairType {
 }
 
 export const Strategy = {
-  SpotOneSide: { spotOneSide: {} },
-  CurveOneSide: { curveOneSide: {} },
-  BidAskOneSide: { bidAskOneSide: {} },
   SpotBalanced: { spotBalanced: {} },
   CurveBalanced: { curveBalanced: {} },
   BidAskBalanced: { bidAskBalanced: {} },
@@ -135,9 +132,6 @@ export const Strategy = {
 };
 
 export enum StrategyType {
-  SpotOneSide,
-  CurveOneSide,
-  BidAskOneSide,
   SpotImBalanced,
   CurveImBalanced,
   BidAskImBalanced,
@@ -390,6 +384,7 @@ export enum BitmapType {
 }
 
 export interface SeedLiquidityResponse {
+  sendPositionOwnerTokenProveIxs: TransactionInstruction[];
   initializeBinArraysAndPositionIxs: TransactionInstruction[][];
   addLiquidityIxs: TransactionInstruction[][];
 }
@@ -413,4 +408,16 @@ export const ClockLayout = struct([
 export enum PairStatus {
   Enabled,
   Disabled,
+}
+
+export interface PairLockInfo {
+  positions: Array<PositionLockInfo>;
+}
+
+export interface PositionLockInfo {
+  positionAddress: PublicKey,
+  owner: PublicKey,
+  tokenXAmount: string,
+  tokenYAmount: string,
+  lockReleasePoint: number
 }

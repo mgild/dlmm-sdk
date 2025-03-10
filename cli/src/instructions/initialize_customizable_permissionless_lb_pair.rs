@@ -1,4 +1,5 @@
 use anchor_client::solana_client::rpc_config::RpcSendTransactionConfig;
+use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::{solana_sdk::pubkey::Pubkey, solana_sdk::signer::Signer, Program};
 use anchor_spl::token::Mint;
 use anyhow::*;
@@ -27,6 +28,7 @@ pub struct InitCustomizablePermissionlessLbPairParameters {
     pub has_alpha_vault: bool,
     pub activation_point: Option<u64>,
     pub selective_rounding: SelectiveRounding,
+    pub creator_pool_on_off_control: bool,
 }
 
 pub async fn initialize_customizable_permissionless_lb_pair<
@@ -35,6 +37,7 @@ pub async fn initialize_customizable_permissionless_lb_pair<
     params: InitCustomizablePermissionlessLbPairParameters,
     program: &Program<C>,
     transaction_config: RpcSendTransactionConfig,
+    compute_unit_price: Option<Instruction>,
 ) -> Result<Pubkey> {
     let InitCustomizablePermissionlessLbPairParameters {
         bin_step,
@@ -46,6 +49,7 @@ pub async fn initialize_customizable_permissionless_lb_pair<
         activation_point,
         has_alpha_vault,
         selective_rounding,
+        creator_pool_on_off_control,
     } = params;
 
     let token_mint_base: Mint = program.account(token_mint_x).await?;
@@ -78,8 +82,22 @@ pub async fn initialize_customizable_permissionless_lb_pair<
     let (oracle, _bump) = derive_oracle_pda(lb_pair);
 
     let (event_authority, _bump) = derive_event_authority_pda();
-    let user_token_x =
-        get_or_create_ata(program, transaction_config, token_mint_x, program.payer()).await?;
+    let user_token_x = get_or_create_ata(
+        program,
+        transaction_config,
+        token_mint_x,
+        program.payer(),
+        compute_unit_price.clone(),
+    )
+    .await?;
+    let user_token_y = get_or_create_ata(
+        program,
+        transaction_config,
+        token_mint_y,
+        program.payer(),
+        compute_unit_price.clone(),
+    )
+    .await?;
 
     let accounts = accounts::InitializeCustomizablePermissionlessLbPair {
         lb_pair,
@@ -90,11 +108,11 @@ pub async fn initialize_customizable_permissionless_lb_pair<
         token_mint_y,
         oracle,
         funder: program.payer(),
-        rent: anchor_client::solana_sdk::sysvar::rent::ID,
         system_program: anchor_client::solana_sdk::system_program::ID,
         token_program: anchor_spl::token::ID,
         event_authority,
         user_token_x,
+        user_token_y,
         program: lb_clmm::ID,
     };
 
@@ -106,7 +124,8 @@ pub async fn initialize_customizable_permissionless_lb_pair<
             activation_type,
             activation_point,
             has_alpha_vault,
-            padding: [0u8; 64],
+            creator_pool_on_off_control,
+            padding: [0u8; 63],
         },
     };
 

@@ -1,7 +1,8 @@
+use anchor_client::solana_sdk::instruction::Instruction;
 use anchor_client::solana_sdk::signer::Signer;
 use anchor_client::Program;
 use lb_clmm::state::bin::BinArray;
-use lb_clmm::state::position::Position;
+use lb_clmm::state::position::PositionV2;
 use lb_clmm::utils::pda::derive_bin_array_pda;
 use spl_associated_token_account::instruction::create_associated_token_account;
 use std::ops::Deref;
@@ -17,6 +18,7 @@ pub async fn get_or_create_ata<C: Deref<Target = impl Signer> + Clone>(
     transaction_config: RpcSendTransactionConfig,
     token_mint: Pubkey,
     wallet_address: Pubkey,
+    compute_unit_price: Option<Instruction>,
 ) -> Result<Pubkey> {
     let user_ata = get_associated_token_address(&wallet_address, &token_mint);
 
@@ -26,7 +28,7 @@ pub async fn get_or_create_ata<C: Deref<Target = impl Signer> + Clone>(
     match user_ata_exists {
         true => Ok(user_ata),
         false => {
-            let builder = program
+            let mut builder = program
                 .request()
                 .instruction(create_associated_token_account(
                     &program.payer(),
@@ -34,6 +36,9 @@ pub async fn get_or_create_ata<C: Deref<Target = impl Signer> + Clone>(
                     &token_mint,
                     &spl_token::ID,
                 ));
+            if let Some(compute_unit_price) = compute_unit_price {
+                builder = builder.instruction(compute_unit_price);
+            }
 
             builder
                 .send_with_spinner_and_config(transaction_config)
@@ -47,7 +52,7 @@ pub async fn get_bin_arrays_for_position<C: Deref<Target = impl Signer> + Clone>
     program: &Program<C>,
     position_address: Pubkey,
 ) -> Result<[Pubkey; 2]> {
-    let position: Position = program.account(position_address).await?;
+    let position: PositionV2 = program.account(position_address).await?;
 
     let lower_bin_array_idx = BinArray::bin_id_to_bin_array_index(position.lower_bin_id)?;
     let upper_bin_array_idx = lower_bin_array_idx.checked_add(1).context("MathOverflow")?;
